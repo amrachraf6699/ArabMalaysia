@@ -1,4 +1,4 @@
-@props(['title' => 'لوحة التحكم'])
+﻿@props(['title' => 'لوحة التحكم'])
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
 
@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $title }} - عرب ماليزيا</title>
+    <title>{{ $title }} - لوحة التحكم</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config={darkMode:"class",theme:{extend:{fontFamily:{cairo:["Cairo","Inter","sans-serif"]}}}};
@@ -47,23 +47,35 @@
             $inactiveClass = 'flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 hover:bg-slate-100
             transition-colors';
             @endphp
+            
+            
             <nav class="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
                 <a href="{{ route('dashboard.home') }}"
                     class="{{ request()->routeIs('dashboard.home') ? $activeClass : $inactiveClass }}"><svg
-                        data-lucide="home" class="w-5 h-5"></svg><span class="sidebar-label">الصفحة
-                        الرئيسية</span></a>
+                        data-lucide="home" class="w-5 h-5"></svg><span class="sidebar-label">لوحة التحكم</span></a>
+
+                @can('admins_read')
                 <a href="{{ route('dashboard.admins.index') }}"
                     class="{{ request()->routeIs('dashboard.admins.*') ? $activeClass : $inactiveClass }}"><svg
-                        data-lucide="shield" class="w-5 h-5"></svg><span class="sidebar-label">المسؤلين</span></a>
+                        data-lucide="shield" class="w-5 h-5"></svg><span class="sidebar-label">المشرفون</span></a>
+                @endcan
+
+                @can('users_read')
                 <a href="{{ route('dashboard.users.index') }}"
                     class="{{ request()->routeIs('dashboard.users.*') ? $activeClass : $inactiveClass }}"><svg
-                        data-lucide="users" class="w-5 h-5"></svg><span class="sidebar-label">المستخدمين</span></a>
+                        data-lucide="users" class="w-5 h-5"></svg><span class="sidebar-label">المستخدمون</span></a>
+                @endcan
+
+                @can('roles_read')
                 <a href="{{ route('dashboard.roles.index') }}"
                     class="{{ request()->routeIs('dashboard.roles.*') ? $activeClass : $inactiveClass }}">
                     <svg data-lucide="key-round" class="w-5 h-5"></svg>
-                    <span class="sidebar-label">الأدوار</span>
+                    <span class="sidebar-label">الأدوار والصلاحيات</span>
                 </a>
+                @endcan
             </nav>
+
+
         </aside>
         <div class="flex-1 flex flex-col overflow-hidden">
             <header

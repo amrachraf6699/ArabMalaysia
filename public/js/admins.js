@@ -268,7 +268,33 @@ const AdminsManager = {
                             لا يوجد رقم هاتف
                     </span>`;
 
-                    const roles = (admin.roles || []).map(r => r.name).join(', ') || '—';
+                const roles = (admin.roles || []).map(r => r.name).join(', ') || '—';
+
+                    let actions = '';
+                    if (window.adminPermissions?.update) {
+                        actions += `<button onclick="AdminsManager.editAdmin(${admin.id})" 
+                            class="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition"
+                            title="تعديل">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                                <path d="m15 5 4 4"/>
+                            </svg>
+                        </button>`;
+                    }
+                    if (window.adminPermissions?.delete) {
+                        actions += `<button onclick="AdminsManager.deleteAdmin(${admin.id})" 
+                            class="flex items-center gap-2 text-red-600 hover:text-red-700 font-medium transition"
+                            title="حذف">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 6h18"/>
+                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                                <line x1="10" x2="10" y1="11" y2="17"/>
+                                <line x1="14" x2="14" y1="11" y2="17"/>
+                            </svg>
+                        </button>`;
+                    }
+                    actions = actions || '<span class="text-slate-400 text-xs">لا صلاحيات</span>';
 
                     tbody.innerHTML += `
                         <tr class="border-b border-slate-200 hover:bg-slate-50 transition">
@@ -278,27 +304,7 @@ const AdminsManager = {
                             <td class="px-6 py-5 text-slate-600">${roles}</td>
                             <td class="px-6 py-5 text-slate-500 text-sm">${createdAt}</td>
                             <td class="px-6 py-5">
-                                <div class="flex gap-3">
-                                    <button onclick="AdminsManager.editAdmin(${admin.id})" 
-                                        class="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition"
-                                        title="تعديل">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
-                                            <path d="m15 5 4 4"/>
-                                        </svg>
-                                    </button>
-                                    <button onclick="AdminsManager.deleteAdmin(${admin.id})" 
-                                        class="flex items-center gap-2 text-red-600 hover:text-red-700 font-medium transition"
-                                        title="حذف">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M3 6h18"/>
-                                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
-                                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-                                            <line x1="10" x2="10" y1="11" y2="17"/>
-                                            <line x1="14" x2="14" y1="11" y2="17"/>
-                                        </svg>
-                                    </button>
-                                </div>
+                                <div class="flex gap-3">${actions}</div>
                             </td>
                         </tr>`;
                 });

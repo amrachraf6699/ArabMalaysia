@@ -86,14 +86,16 @@
         <div id="tab-users" class="tab-content p-6">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-bold text-slate-800">قائمة المشرفين</h2>
-                <button onclick="AdminsManager.openModal()"
-                    class="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="12" y1="5" x2="12" y2="19" />
-                        <line x1="5" y1="12" x2="19" y2="12" />
-                    </svg>
-                    إضافة مشرف
-                </button>
+                @can('admins_create')
+                    <button onclick="AdminsManager.openModal()"
+                        class="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        إضافة مشرف
+                    </button>
+                @endcan
             </div>
 
             <div class="mb-6 space-y-4">
@@ -160,5 +162,12 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        window.adminPermissions = {
+            create: @json(auth()->user()->can('admins_create')),
+            update: @json(auth()->user()->can('admins_update')),
+            delete: @json(auth()->user()->can('admins_delete')),
+        };
+    </script>
     <script src="{{ asset('js/admins.js') }}"></script>
 </x-dashboard.layout>
