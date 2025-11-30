@@ -86,7 +86,7 @@ function initSelect2() {
 
 function initCommon() {
   initSidebar()
-  initSelect2()
+  // initSelect2()
   if (typeof lucide !== "undefined") {
     lucide.createIcons()
   }
