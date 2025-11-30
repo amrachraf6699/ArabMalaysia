@@ -147,7 +147,7 @@
                 <!-- Skeleton Table -->
                 <table id="table-skeleton" class="w-full text-sm hidden">
                     <tbody>
-                        @for($i = 0; $i < 6; $i++) <tr class="border-b border-slate-200">
+                        @for($i = 0; $i < 2; $i++) <tr class="border-b border-slate-200">
                             <td class="px-6 py-5">
                                 <div class="skeleton h-5 w-32 rounded"></div>
                             </td>

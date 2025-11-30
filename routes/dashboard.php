@@ -7,11 +7,13 @@ Route::get('/', function () {
     return view('dashboard.welcome');
 })->name('home');
 
-Route::get('/admins', [AdminsController::class, 'index'])->name('admins.index');
-Route::get('/admins/data', [AdminsController::class, 'data'])->name('admins.data');
-Route::get('/admins/stats', [AdminsController::class, 'stats'])->name('admins.stats');
-Route::get('/admins/chart-data', [AdminsController::class, 'chartData'])->name('admins.chart');
-Route::get('/admins/{admin}', [AdminsController::class, 'show'])->name('admins.show');
-Route::post('/admins/store', [AdminsController::class, 'store'])->name('admins.store');
-Route::put('/admins/{admin}', [AdminsController::class, 'update'])->name('admins.update');
-Route::delete('/admins/{admin}', [AdminsController::class, 'destroy'])->name('admins.destroy');
+Route::group(['prefix' => 'admins', 'controller' => AdminsController::class, 'as' => 'admins.'], function () {
+    Route::get('', 'index')->name('index');
+    Route::get('/data', 'data')->name('data');
+    Route::get('/stats', 'stats')->name('stats');
+    Route::get('/chart-data', 'chartData')->name('chart');
+    Route::get('/{admin}', 'show')->name('show');
+    Route::post('/store', 'store')->name('store');
+    Route::put('/{admin}', 'update')->name('update');
+    Route::delete('/{admin}', 'destroy')->name('destroy');
+});
