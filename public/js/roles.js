@@ -1,9 +1,8 @@
-// public/js/admins.js
-const AdminsManager = {
+// public/js/roles.js
+const RolesManager = {
     currentPage: 1,
     sortBy: 'created_at',
     sortDir: 'desc',
-    search: '',
     prevPage: null,
     nextPage: null,
     chart: null,
@@ -11,7 +10,7 @@ const AdminsManager = {
     init() {
         this.setupCSRF();
         this.bindEvents();
-        this.switchTab('users');
+        this.switchTab('roles');
     },
 
     setupCSRF() {
@@ -25,27 +24,30 @@ const AdminsManager = {
         });
 
         document.getElementById('search-input')?.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') this.loadAdmins();
+            if (e.key === 'Enter') this.loadRoles();
         });
 
-        document.getElementById('filter-from')?.addEventListener('change', () => this.loadAdmins());
-        document.getElementById('filter-to')?.addEventListener('change', () => this.loadAdmins());
-        document.getElementById('filter-per-page')?.addEventListener('change', () => this.loadAdmins());
+        document.getElementById('filter-from')?.addEventListener('change', () => this.loadRoles());
+        document.getElementById('filter-to')?.addEventListener('change', () => this.loadRoles());
+        document.getElementById('filter-per-page')?.addEventListener('change', () => this.loadRoles());
 
-        document.getElementById('admin-modal')?.addEventListener('click', (e) => {
-            if (e.target.id === 'admin-modal') {
-                this.closeModal();
-            }
+        document.getElementById('role-modal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'role-modal') this.closeModal();
         });
 
-        // تهيئة Select2 للأدوار
-        if (window.jQuery && $('#roles-select').length) {
-            $('#roles-select').select2({
-                width: '100%',
-                placeholder: 'اختر الأدوار',
-                dir: 'rtl'
+        document.getElementById('select-all-permissions')?.addEventListener('change', (e) => {
+            const checked = e.target.checked;
+            document.querySelectorAll('#permissions-list .perm-checkbox').forEach(cb => cb.checked = checked);
+        });
+
+        // FIX: Changed backticks to regular quotes
+        document.querySelectorAll('.group-toggle').forEach(toggle => {
+            toggle.addEventListener('change', (e) => {
+                const resource = e.target.dataset.resource;
+                const checked = e.target.checked;
+                document.querySelectorAll('#permissions-list .perm-checkbox[data-resource="' + resource + '"]').forEach(cb => cb.checked = checked);
             });
-        }
+        });
     },
 
     switchTab(tab) {
@@ -55,53 +57,45 @@ const AdminsManager = {
             btn.classList.add('text-slate-600');
         });
 
-        document.getElementById(`tab-${tab}`).classList.remove('hidden');
-        document.querySelector(`[data-tab="${tab}"]`).classList.add('active', 'border-b-2', 'border-blue-500', 'text-slate-900');
+        // FIX: Changed backticks to regular quotes
+        document.getElementById('tab-' + tab).classList.remove('hidden');
+        document.querySelector('[data-tab="' + tab + '"]').classList.add('active', 'border-b-2', 'border-blue-500', 'text-slate-900');
 
         if (tab === 'stats') {
             this.loadStats();
             this.loadChart();
         }
-        if (tab === 'users') this.loadAdmins();
+        if (tab === 'roles') this.loadRoles();
     },
 
     showGlobalLoading() {
         document.getElementById('global-loading').classList.remove('hidden');
     },
-
+    
     hideGlobalLoading() {
         document.getElementById('global-loading').classList.add('hidden');
     },
 
     showTableSkeleton() {
-        document.getElementById('admins-table').classList.add('hidden');
+        document.getElementById('roles-table').classList.add('hidden');
         document.getElementById('table-skeleton').classList.remove('hidden');
     },
-
+    
     hideTableSkeleton() {
         document.getElementById('table-skeleton').classList.add('hidden');
-        document.getElementById('admins-table').classList.remove('hidden');
+        document.getElementById('roles-table').classList.remove('hidden');
     },
 
     openModal(isEdit = false) {
-        document.getElementById('admin-modal').classList.remove('hidden');
-        document.getElementById('modal-title').textContent = isEdit ? 'تعديل مشرف' : 'إضافة مشرف جديد';
-        document.getElementById('password-hint').classList.toggle('hidden', !isEdit);
-        document.querySelector('[name="password"]').toggleAttribute('required', !isEdit);
-        if (!isEdit && window.jQuery) {
-            $('#roles-select').val(null).trigger('change');
-        }
+        document.getElementById('role-modal').classList.remove('hidden');
+        document.getElementById('modal-title').textContent = isEdit ? 'تعديل دور' : 'إضافة دور جديد';
     },
 
     closeModal() {
-        document.getElementById('admin-modal').classList.add('hidden');
-        document.getElementById('admin-form').reset();
-        document.getElementById('admin-id').value = '';
-        document.getElementById('password-hint').classList.add('hidden');
-        document.querySelector('[name="password"]').setAttribute('required', 'required');
-        if (window.jQuery) {
-            $('#roles-select').val(null).trigger('change');
-        }
+        document.getElementById('role-modal').classList.add('hidden');
+        document.getElementById('role-form').reset();
+        document.getElementById('role-id').value = '';
+        this.fillPermissions([]);
     },
 
     loadStats() {
@@ -111,12 +105,12 @@ const AdminsManager = {
             <div class="skeleton h-32 rounded-lg"></div>
         `;
 
-        axios.get('/dashboard/admins/stats')
+        axios.get('/dashboard/roles/stats')
             .then(res => {
                 container.innerHTML = `
                     <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 shadow-lg text-white">
                         <div class="flex items-center justify-between mb-4">
-                            <p class="text-sm opacity-90">إجمالي عدد المشرفين</p>
+                            <p class="text-sm opacity-90">إجمالي عدد الأدوار</p>
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-70">
                                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
                                 <circle cx="9" cy="7" r="4"/>
@@ -124,11 +118,11 @@ const AdminsManager = {
                                 <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                             </svg>
                         </div>
-                        <p class="text-4xl font-bold">${res.data.total_admins}</p>
+                        <p class="text-4xl font-bold">${res.data.total_roles}</p>
                     </div>
                     <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 shadow-lg text-white">
                         <div class="flex items-center justify-between mb-4">
-                            <p class="text-sm opacity-90">المشرفون الجدد هذا الشهر</p>
+                            <p class="text-sm opacity-90">الأدوار المضافة هذا الشهر</p>
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-70">
                                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
                                 <circle cx="9" cy="7" r="4"/>
@@ -143,10 +137,10 @@ const AdminsManager = {
     },
 
     loadChart() {
-        axios.get('/dashboard/admins/chart-data')
+        axios.get('/dashboard/roles/chart-data')
             .then(res => {
-                const ctx = document.getElementById('adminsChart').getContext('2d');
-
+                const ctx = document.getElementById('rolesChart').getContext('2d');
+                
                 if (this.chart) {
                     this.chart.destroy();
                 }
@@ -162,7 +156,7 @@ const AdminsManager = {
                     data: {
                         labels: labels,
                         datasets: [{
-                            label: 'تسجيلات المشرفين اليومية',
+                            label: 'الأدوار المضافة يومياً',
                             data: data,
                             borderColor: 'rgb(59, 130, 246)',
                             backgroundColor: 'rgba(59, 130, 246, 0.1)',
@@ -216,9 +210,9 @@ const AdminsManager = {
             });
     },
 
-    loadAdmins(page = 1) {
+    loadRoles(page = 1) {
         this.currentPage = page;
-        this.search = document.getElementById('search-input').value.trim();
+        const search = document.getElementById('search-input').value.trim();
         const from = document.getElementById('filter-from').value;
         const to = document.getElementById('filter-to').value;
         const perPage = document.getElementById('filter-per-page').value;
@@ -226,25 +220,25 @@ const AdminsManager = {
         this.showTableSkeleton();
         document.getElementById('pagination-info').textContent = 'جاري تحميل البيانات...';
 
-        axios.get('/dashboard/admins/data', {
+        axios.get('/dashboard/roles/data', {
             params: { 
                 page, 
-                search: this.search, 
+                search, 
                 sort_by: this.sortBy, 
                 sort_dir: this.sortDir,
-                from: from,
-                to: to,
+                from,
+                to,
                 per_page: perPage
             }
         }).then(res => {
             this.hideTableSkeleton();
-            const tbody = document.getElementById('admins-table-body');
+            const tbody = document.getElementById('roles-table-body');
             tbody.innerHTML = '';
 
             if (res.data.data.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="6" class="px-6 py-12 text-center text-slate-500">
+                        <td colspan="4" class="px-6 py-12 text-center text-slate-500">
                             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-4 opacity-50">
                                 <circle cx="11" cy="11" r="8"/>
                                 <path d="m21 21-4.3-4.3"/>
@@ -254,32 +248,21 @@ const AdminsManager = {
                     </tr>
                 `;
             } else {
-                res.data.data.forEach(admin => {
-                    const createdAt = new Date(admin.created_at).toLocaleDateString('ar-EG', {
+                res.data.data.forEach(role => {
+                    const createdAt = new Date(role.created_at).toLocaleDateString('ar-EG', {
                         year: 'numeric',
                         month: 'short',
                         day: 'numeric'
                     });
 
-                    const phoneCell = admin.phone
-                    ? admin.phone
-                    : `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold 
-                            bg-red-100 text-red-700 border border-red-200">
-                            لا يوجد رقم هاتف
-                    </span>`;
-
-                    const roles = (admin.roles || []).map(r => r.name).join(', ') || '—';
-
                     tbody.innerHTML += `
                         <tr class="border-b border-slate-200 hover:bg-slate-50 transition">
-                            <td class="px-6 py-5 font-medium">${admin.name}</td>
-                            <td class="px-6 py-5 text-slate-600">${admin.email}</td>
-                            <td class="px-6 py-5">${phoneCell}</td>
-                            <td class="px-6 py-5 text-slate-600">${roles}</td>
+                            <td class="px-6 py-5 font-medium">${role.name}</td>
+                            <td class="px-6 py-5 text-slate-600">${role.permissions_count}</td>
                             <td class="px-6 py-5 text-slate-500 text-sm">${createdAt}</td>
                             <td class="px-6 py-5">
                                 <div class="flex gap-3">
-                                    <button onclick="AdminsManager.editAdmin(${admin.id})" 
+                                    <button onclick="RolesManager.editRole(${role.id})" 
                                         class="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition"
                                         title="تعديل">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -287,7 +270,7 @@ const AdminsManager = {
                                             <path d="m15 5 4 4"/>
                                         </svg>
                                     </button>
-                                    <button onclick="AdminsManager.deleteAdmin(${admin.id})" 
+                                    <button onclick="RolesManager.deleteRole(${role.id})" 
                                         class="flex items-center gap-2 text-red-600 hover:text-red-700 font-medium transition"
                                         title="حذف">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -305,8 +288,10 @@ const AdminsManager = {
             }
 
             document.getElementById('pagination-info').textContent = `عرض ${res.data.pagination.from || 0} - ${res.data.pagination.to || 0} من ${res.data.pagination.total}`;
+            
             this.prevPage = res.data.pagination.current_page - 1;
             this.nextPage = res.data.pagination.current_page + 1;
+            
             document.getElementById('prev-btn').disabled = res.data.pagination.current_page <= 1;
             document.getElementById('next-btn').disabled = res.data.pagination.current_page >= res.data.pagination.last_page;
         });
@@ -319,12 +304,12 @@ const AdminsManager = {
             this.sortBy = column;
             this.sortDir = 'desc';
         }
-        this.loadAdmins();
+        this.loadRoles();
     },
 
     changePage(page) {
         if (page < 1) return;
-        this.loadAdmins(page);
+        this.loadRoles(page);
     },
 
     resetFilters() {
@@ -332,26 +317,44 @@ const AdminsManager = {
         document.getElementById('filter-from').value = '';
         document.getElementById('filter-to').value = '';
         document.getElementById('filter-per-page').value = '10';
-        this.loadAdmins();
+        this.loadRoles();
     },
 
-    editAdmin(id) {
+    fillPermissions(permissionIds = []) {
+        document.querySelectorAll('#permissions-list input[name="permissions[]"]').forEach(cb => {
+            cb.checked = permissionIds.includes(parseInt(cb.value, 10));
+        });
+
+        // تحديث حالة تحديد الجميع
+        const allCheckbox = document.getElementById('select-all-permissions');
+        if (allCheckbox) {
+            const allPerms = Array.from(document.querySelectorAll('#permissions-list .perm-checkbox'));
+            allCheckbox.checked = allPerms.length > 0 && allPerms.every(cb => cb.checked);
+        }
+
+        // تحديث حالة كل مجموعة - FIX: Changed backticks to regular quotes
+        document.querySelectorAll('.group-toggle').forEach(toggle => {
+            const resource = toggle.dataset.resource;
+            const groupPerms = Array.from(document.querySelectorAll('#permissions-list .perm-checkbox[data-resource="' + resource + '"]'));
+            toggle.checked = groupPerms.length > 0 && groupPerms.every(cb => cb.checked);
+        });
+    },
+
+    collectPermissions() {
+        return Array.from(
+            document.querySelectorAll('#permissions-list input[name="permissions[]"]:checked')
+        ).map(cb => parseInt(cb.value, 10));
+    },
+
+    editRole(id) {
         this.showGlobalLoading();
-        axios.get(`/dashboard/admins/${id}`)
+        // FIX: Changed backticks to regular quotes
+        axios.get('/dashboard/roles/' + id)
             .then(res => {
                 this.hideGlobalLoading();
-                document.getElementById('admin-id').value = res.data.id;
+                document.getElementById('role-id').value = res.data.id;
                 document.querySelector('[name="name"]').value = res.data.name;
-                document.querySelector('[name="email"]').value = res.data.email;
-                document.querySelector('[name="phone"]').value = res.data.phone || '';
-                document.querySelector('[name="password"]').value = '';
-                
-                // تعيين الأدوار في Select2
-                const roles = (res.data.roles || []).map(r => r.id.toString());
-                if (window.jQuery) {
-                    $('#roles-select').val(roles).trigger('change');
-                }
-                
+                this.fillPermissions(res.data.permissions);
                 this.openModal(true);
             })
             .catch(() => {
@@ -359,14 +362,14 @@ const AdminsManager = {
                 Swal.fire({
                     icon: 'error',
                     title: 'خطأ',
-                    text: 'حدث خطأ أثناء جلب بيانات المشرف. حاول مجدداً.',
+                    text: 'حدث خطأ أثناء جلب بيانات الدور.',
                     confirmButtonText: 'حسناً',
                     confirmButtonColor: '#2563eb'
                 });
             });
     },
 
-    deleteAdmin(id) {
+    deleteRole(id) {
         Swal.fire({
             title: 'هل أنت متأكد؟',
             text: 'لن تتمكن من استرجاع هذا السجل بعد الحذف!',
@@ -380,17 +383,18 @@ const AdminsManager = {
         }).then((result) => {
             if (result.isConfirmed) {
                 this.showGlobalLoading();
-                axios.delete(`/dashboard/admins/${id}`)
+                // FIX: Changed backticks to regular quotes
+                axios.delete('/dashboard/roles/' + id)
                     .then(() => {
                         this.hideGlobalLoading();
                         Swal.fire({
                             icon: 'success',
                             title: 'تم الحذف!',
-                            text: 'تم حذف المشرف بنجاح.',
+                            text: 'تم حذف الدور بنجاح.',
                             timer: 2000,
                             showConfirmButton: false
                         });
-                        this.loadAdmins(this.currentPage);
+                        this.loadRoles(this.currentPage);
                     })
                     .catch(err => {
                         this.hideGlobalLoading();
@@ -408,32 +412,28 @@ const AdminsManager = {
 };
 
 // إرسال النموذج
-document.getElementById('admin-form').onsubmit = function(e) {
+document.getElementById('role-form').onsubmit = function(e) {
     e.preventDefault();
-    AdminsManager.showGlobalLoading();
+    RolesManager.showGlobalLoading();
 
-    const id = document.getElementById('admin-id').value;
+    const id = document.getElementById('role-id').value;
     const formData = new FormData(this);
-    
     const data = {};
+
     formData.forEach((value, key) => {
-        if (key === 'roles[]') return; // سنجمع الأدوار يدوياً
-        if (value) data[key] = value;
+        if (key === 'permissions[]') return; // سنجمعها يدوياً
+        data[key] = value;
     });
 
-    // جمع الأدوار من Select2
-    const selectedRoles = $('#roles-select').val() || [];
-    data.roles = selectedRoles;
+    data.permissions = RolesManager.collectPermissions();
 
-    const url = id ? `/dashboard/admins/${id}` : '/dashboard/admins/store';
+    const url = id ? '/dashboard/roles/' + id : '/dashboard/roles/store';
     const method = id ? 'put' : 'post';
-
-    console.log('Sending data:', data); // للتحقق من البيانات المرسلة
 
     axios[method](url, data)
         .then(res => {
-            AdminsManager.hideGlobalLoading();
-            AdminsManager.closeModal();
+            RolesManager.hideGlobalLoading();
+            RolesManager.closeModal();
             
             Swal.fire({
                 icon: 'success',
@@ -443,10 +443,10 @@ document.getElementById('admin-form').onsubmit = function(e) {
                 showConfirmButton: false
             });
             
-            AdminsManager.loadAdmins(AdminsManager.currentPage);
+            RolesManager.loadRoles(RolesManager.currentPage);
         })
         .catch(err => {
-            AdminsManager.hideGlobalLoading();
+            RolesManager.hideGlobalLoading();
             
             const message = err.response?.data?.message || 'حدث خطأ ما.';
             const errors = err.response?.data?.errors;
@@ -455,8 +455,6 @@ document.getElementById('admin-form').onsubmit = function(e) {
             if (errors) {
                 errorText += '\n\n' + Object.values(errors).flat().join('\n');
             }
-            
-            console.error('Error response:', err.response); // للتحقق من الأخطاء
             
             Swal.fire({
                 icon: 'error',
@@ -468,4 +466,5 @@ document.getElementById('admin-form').onsubmit = function(e) {
         });
 };
 
-document.addEventListener('DOMContentLoaded', () => AdminsManager.init());
+// تشغيل البداية
+document.addEventListener('DOMContentLoaded', () => RolesManager.init());

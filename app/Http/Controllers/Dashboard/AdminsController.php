@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Dashboard\StoreAdminRequest;
 use App\Models\Admin;
+use Spatie\Permission\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -12,13 +13,14 @@ class AdminsController extends Controller
 {
     public function index()
     {
-        return view('dashboard.admins.index');
+        $roles = Role::where('guard_name', 'admin')->orderBy('name')->get(['id', 'name']);
+        return view('dashboard.admins.index', compact('roles'));
     }
 
     // جلب بيانات الجدول (Ajax)
     public function data(Request $request)
     {
-        $query = Admin::where('id', '!=', auth()->id());
+        $query = Admin::where('id', '!=', auth()->id())->with('roles:id,name');
 
         // البحث
         if ($request->filled('search')) {
@@ -87,19 +89,33 @@ class AdminsController extends Controller
 
     public function show(Admin $admin)
     {
+        $admin->load('roles:id,name');
         return response()->json($admin);
     }
 
     public function store(StoreAdminRequest $request)
     {
-        Admin::create([
+        $admin = Admin::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => $request->password,
+            'password' => bcrypt($request->password),
             'phone' => $request->phone,
         ]);
 
-        return response()->json(['message' => 'تم إضافة المسؤول بنجاح']);
+        // تعيين الأدوار
+        if ($request->has('roles') && is_array($request->roles)) {
+            $roleIds = array_filter($request->roles); // إزالة القيم الفارغة
+
+            if (!empty($roleIds)) {
+                $roles = Role::where('guard_name', 'admin')
+                    ->whereIn('id', $roleIds)
+                    ->get();
+
+                $admin->syncRoles($roles);
+            }
+        }
+
+        return response()->json(['message' => 'تمت إضافة المشرف بنجاح.']);
     }
 
     public function update(Request $request, Admin $admin)
@@ -109,25 +125,44 @@ class AdminsController extends Controller
             'email' => 'required|email|unique:admins,email,' . $admin->id,
             'password' => 'nullable|min:8',
             'phone' => 'nullable|string|max:20',
+            'roles' => 'nullable|array',
+            'roles.*' => 'exists:roles,id'
         ]);
 
         $data = $request->only(['name', 'email', 'phone']);
+
         if ($request->filled('password')) {
-            $data['password'] = $request->password;
+            $data['password'] = bcrypt($request->password);
         }
 
         $admin->update($data);
 
-        return response()->json(['message' => 'تم التعديل بنجاح']);
+        // تحديث الأدوار
+        if ($request->has('roles')) {
+            $roleIds = array_filter($request->roles ?? []); // إزالة القيم الفارغة
+
+            if (!empty($roleIds)) {
+                $roles = Role::where('guard_name', 'admin')
+                    ->whereIn('id', $roleIds)
+                    ->get();
+
+                $admin->syncRoles($roles);
+            } else {
+                // إذا كانت الأدوار فارغة، قم بإزالة جميع الأدوار
+                $admin->syncRoles([]);
+            }
+        }
+
+        return response()->json(['message' => 'تم تحديث بيانات المشرف بنجاح.']);
     }
 
     public function destroy(Admin $admin)
     {
         if ($admin->id === auth()->id()) {
-            return response()->json(['message' => 'لا يمكن حذف حسابك الشخصي!'], 403);
+            return response()->json(['message' => 'لا يمكن حذف حسابك الشخصي.'], 403);
         }
 
         $admin->delete();
-        return response()->json(['message' => 'تم الحذف بنجاح']);
+        return response()->json(['message' => 'تم حذف المشرف بنجاح.']);
     }
 }

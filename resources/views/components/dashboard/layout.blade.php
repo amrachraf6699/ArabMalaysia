@@ -17,6 +17,9 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -47,10 +50,19 @@
             <nav class="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
                 <a href="{{ route('dashboard.home') }}"
                     class="{{ request()->routeIs('dashboard.home') ? $activeClass : $inactiveClass }}"><svg
-                        data-lucide="home" class="w-5 h-5"></svg><span class="sidebar-label">الصفحة الرئيسية</span></a>
+                        data-lucide="home" class="w-5 h-5"></svg><span class="sidebar-label">الصفحة
+                        الرئيسية</span></a>
                 <a href="{{ route('dashboard.admins.index') }}"
                     class="{{ request()->routeIs('dashboard.admins.*') ? $activeClass : $inactiveClass }}"><svg
                         data-lucide="shield" class="w-5 h-5"></svg><span class="sidebar-label">المسؤلين</span></a>
+                <a href="{{ route('dashboard.users.index') }}"
+                    class="{{ request()->routeIs('dashboard.users.*') ? $activeClass : $inactiveClass }}"><svg
+                        data-lucide="users" class="w-5 h-5"></svg><span class="sidebar-label">المستخدمين</span></a>
+                <a href="{{ route('dashboard.roles.index') }}"
+                    class="{{ request()->routeIs('dashboard.roles.*') ? $activeClass : $inactiveClass }}">
+                    <svg data-lucide="key-round" class="w-5 h-5"></svg>
+                    <span class="sidebar-label">الأدوار</span>
+                </a>
             </nav>
         </aside>
         <div class="flex-1 flex flex-col overflow-hidden">

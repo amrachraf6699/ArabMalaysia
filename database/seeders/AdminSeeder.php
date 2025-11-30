@@ -14,6 +14,7 @@ class AdminSeeder extends Seeder
     public function run(): void
     {
         $faker = \Faker\Factory::create();
+        Admin::truncate();
 
         for ($i = 1; $i <= 30; $i++) {
             Admin::create([
@@ -21,6 +22,8 @@ class AdminSeeder extends Seeder
                 'email'    => 'admin' . $i . '@website.com',
                 'password' => 'password' . $i,
                 'phone'    => $i % 2 == 0 ? $faker->e164PhoneNumber() : null,
+                'created_at' => $faker->dateTimeBetween('-30 days', 'now'),
+                'updated_at' => $faker->dateTimeBetween('-30 days', 'now'),
             ]);
         }
     }

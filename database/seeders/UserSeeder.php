@@ -14,13 +14,16 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         $faker = \Faker\Factory::create();
+        User::truncate();
 
         for ($i = 1; $i <= 30; $i++) {
-            User::create([
-                'name'     => 'Admin' . $i,
-                'email'    => 'admin' . $i . '@website.com',
+            User::FirstOrCreate([
+                'name'     => 'user' . $i,
+                'email'    => 'user' . $i . '@website.com',
                 'password' => 'password' . $i,
                 'phone'    => $i % 2 == 0 ? $faker->e164PhoneNumber() : null,
+                'created_at' => $faker->dateTimeBetween('-30 days', 'now'),
+                'updated_at' => $faker->dateTimeBetween('-30 days', 'now'),
             ]);
         }
     }
